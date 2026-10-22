@@ -62,6 +62,22 @@
           <span id="heartbeat-text">Servidor activo</span>
         </div>
 
+        <!-- Botón Feedback / Opinión -->
+        <button onclick="openFeedbackModal()" title="Enviar opinión o sugerencia"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-amber-300 transition-all hover:border-amber-500/40 shadow-sm">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          </svg>
+          <span class="hidden sm:inline">Feedback</span>
+        </button>
+
+        <!-- Botón Donar / Apoyar -->
+        <button onclick="openDonateModal()" title="Invítanos un café para apoyar el proyecto"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-xs font-semibold text-amber-300 transition-all shadow-sm">
+          <span>☕</span>
+          <span class="hidden sm:inline">Invítame un café</span>
+        </button>
+
         <!-- Botón Cambiar Carpeta -->
         <button onclick="chooseFolder()" title="Cambiar la carpeta donde se guardan las descargas"
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-all hover:border-slate-600 shadow-sm">
@@ -177,6 +193,27 @@
     <div id="results-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       <!-- Inyectado dinámicamente -->
     </div>
+
+    <!-- BANNER DE APOYO / DONACIÓN -->
+    <div class="mt-12 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/30 border border-slate-800 hover:border-amber-500/30 transition-all flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3 text-center sm:text-left">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-xl shrink-0">
+          ☕
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white">¿Te gusta Musica Downloader?</h4>
+          <p class="text-xs text-slate-400">Esta app es gratuita y sin anuncios. Apoya el mantenimiento de los servidores con un café.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="openDonateModal()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-md shadow-amber-500/20 flex items-center gap-1.5 active:scale-95">
+          <span>☕ Invítame un café</span>
+        </button>
+        <button onclick="openFeedbackModal()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition-all">
+          Dar opinión
+        </button>
+      </div>
+    </div>
   </main>
 
   <!-- MODAL DE REPRODUCCIÓN EN VIVO (AUDIO NATIVO SIN ANUNCIOS) -->
@@ -254,6 +291,122 @@
     </div>
   </div>
 
+  <!-- MODAL DE DONACIÓN / APOYO -->
+  <div id="donate-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">☕</span>
+          <h3 class="font-bold text-white text-base">Apoyar Musica Downloader</h3>
+        </div>
+        <button onclick="closeDonateModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors text-lg font-bold">
+          &times;
+        </button>
+      </div>
+      <div class="p-6 text-center space-y-4">
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Musica Downloader es un proyecto independiente desarrollado para ofrecer descargas de audio limpias, portables y 100% libres de publicidad invasiva.
+        </p>
+        <p class="text-xs text-slate-400">
+          Tu contribución ayuda a costear el dominio, la base de datos de telemetría y el tiempo de desarrollo de nuevas funciones.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <a href="https://buymeacoffee.com" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md">
+            <span>☕ Buy Me a Coffee</span>
+          </a>
+          <a href="https://paypal.me" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md">
+            <span>💳 Donar con PayPal</span>
+          </a>
+        </div>
+      </div>
+      <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 text-center text-[11px] text-slate-500">
+        ¡Muchas gracias por valorar y usar este proyecto! ❤️
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE FEEDBACK / RETROALIMENTACIÓN -->
+  <div id="feedback-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-lg text-amber-400">💬</span>
+          <h3 class="font-bold text-white text-base">Tu opinión nos importa</h3>
+        </div>
+        <button onclick="closeFeedbackModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors text-lg font-bold">
+          &times;
+        </button>
+      </div>
+
+      <form id="feedback-form" onsubmit="submitFeedback(event)" class="p-6 space-y-4">
+        <!-- Calificación en estrellas -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">¿Qué te parece la aplicación?</label>
+          <div class="flex items-center gap-2" id="star-rating-container">
+            <!-- 5 estrellas interactivas -->
+            <button type="button" onclick="setFeedbackRating(1)" class="star-btn text-2xl text-amber-400 focus:outline-none transition-transform hover:scale-125" data-star="1">★</button>
+            <button type="button" onclick="setFeedbackRating(2)" class="star-btn text-2xl text-amber-400 focus:outline-none transition-transform hover:scale-125" data-star="2">★</button>
+            <button type="button" onclick="setFeedbackRating(3)" class="star-btn text-2xl text-amber-400 focus:outline-none transition-transform hover:scale-125" data-star="3">★</button>
+            <button type="button" onclick="setFeedbackRating(4)" class="star-btn text-2xl text-amber-400 focus:outline-none transition-transform hover:scale-125" data-star="4">★</button>
+            <button type="button" onclick="setFeedbackRating(5)" class="star-btn text-2xl text-amber-400 focus:outline-none transition-transform hover:scale-125" data-star="5">★</button>
+            <span id="rating-label" class="text-xs text-slate-400 ml-2 font-medium">5 de 5 estrellas</span>
+          </div>
+        </div>
+
+        <!-- Categoría -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Tipo de comentario</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="feedback-category" value="opinion" checked class="peer sr-only">
+              <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:text-emerald-400 text-center text-xs font-medium text-slate-300 transition-all">
+                ⭐ Opinión
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="feedback-category" value="suggestion" class="peer sr-only">
+              <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700 peer-checked:border-amber-500 peer-checked:bg-amber-500/10 peer-checked:text-amber-400 text-center text-xs font-medium text-slate-300 transition-all">
+                💡 Sugerencia
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="feedback-category" value="bug" class="peer sr-only">
+              <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700 peer-checked:border-rose-500 peer-checked:bg-rose-500/10 peer-checked:text-rose-400 text-center text-xs font-medium text-slate-300 transition-all">
+                🐞 Problema
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Mensaje -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Mensaje o sugerencia</label>
+          <textarea id="feedback-message" required rows="3" placeholder="¿Qué función te gustaría ver en la próxima versión? O cuéntanos cualquier detalle..."
+                    class="w-full p-3 bg-slate-950 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs"></textarea>
+        </div>
+
+        <!-- Email opcional -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Correo electrónico (opcional)</label>
+          <input type="email" id="feedback-email" placeholder="Por si deseas que te contactemos para resolver dudas"
+                 class="w-full px-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs" />
+        </div>
+
+        <!-- Botón Enviar -->
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeFeedbackModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all">
+            Cancelar
+          </button>
+          <button type="submit" id="feedback-submit-btn" class="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-bold text-xs transition-all shadow-md shadow-emerald-500/20 active:scale-95">
+            Enviar opinión
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- PIE DE PÁGINA -->
   <footer class="border-t border-slate-900 py-4 text-center text-xs text-slate-600 bg-slate-950/80">
     <p>Musica Downloader &bull; Servidor local activo en <code class="text-slate-500 font-mono">127.0.0.1:8765</code> &bull; Se apaga al cerrar el navegador.</p>
@@ -261,8 +414,100 @@
 
   <!-- JAVASCRIPT DE CONTROL Y COMUNICACIÓN -->
   <script>
+    const TELEMETRY_SERVER = "https://api-musica.demiempresa.online";
     let activeDownloads = new Set();
     let currentResults = [];
+    let currentFeedbackRating = 5;
+
+    // Helper para enviar eventos anónimos de telemetría de forma silenciosa
+    function sendTelemetryEvent(eventType, extraInfo = null) {
+      try {
+        fetch(`${TELEMETRY_SERVER}/api/telemetry/event`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event_type: eventType, extra_info: extraInfo ? String(extraInfo).slice(0, 255) : null })
+        }).catch(() => {});
+      } catch (e) {}
+    }
+
+    // GESTIÓN DEL MODAL DE DONACIÓN
+    function openDonateModal() {
+      document.getElementById('donate-modal').classList.remove('hidden');
+    }
+    function closeDonateModal() {
+      document.getElementById('donate-modal').classList.add('hidden');
+    }
+
+    // GESTIÓN DEL MODAL DE FEEDBACK
+    function openFeedbackModal() {
+      document.getElementById('feedback-modal').classList.remove('hidden');
+      setFeedbackRating(5);
+    }
+    function closeFeedbackModal() {
+      document.getElementById('feedback-modal').classList.add('hidden');
+    }
+    function setFeedbackRating(stars) {
+      currentFeedbackRating = stars;
+      const btns = document.querySelectorAll('.star-btn');
+      btns.forEach((btn, idx) => {
+        if (idx < stars) {
+          btn.classList.add('text-amber-400');
+          btn.classList.remove('text-slate-600');
+        } else {
+          btn.classList.remove('text-amber-400');
+          btn.classList.add('text-slate-600');
+        }
+      });
+      const lbl = document.getElementById('rating-label');
+      if (lbl) lbl.textContent = `${stars} de 5 estrellas`;
+    }
+
+    async function submitFeedback(event) {
+      if (event) event.preventDefault();
+      const submitBtn = document.getElementById('feedback-submit-btn');
+      const msgInput = document.getElementById('feedback-message');
+      const emailInput = document.getElementById('feedback-email');
+      const catRadio = document.querySelector('input[name="feedback-category"]:checked');
+
+      const message = msgInput.value.trim();
+      if (!message) {
+        showToast("Por favor escribe tu comentario o sugerencia", "warning");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Enviando...";
+
+      try {
+        const payload = {
+          rating: currentFeedbackRating,
+          category: catRadio ? catRadio.value : 'opinion',
+          message: message,
+          email: emailInput.value.trim() || null,
+          app_version: 'v1.2.0'
+        };
+
+        const res = await fetch(`${TELEMETRY_SERVER}/api/feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast("¡Muchas gracias! Tu opinión ha sido enviada con éxito.", "success");
+          msgInput.value = "";
+          closeFeedbackModal();
+        } else {
+          showToast(data.error || "No se pudo enviar la opinión en este momento", "error");
+        }
+      } catch (err) {
+        showToast("Error de conexión al enviar feedback", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Enviar opinión";
+      }
+    }
 
     // 1. SISTEMA DE HEARTBEAT
     async function sendHeartbeat() {
@@ -417,12 +662,22 @@
       modal.classList.add('hidden');
     }
 
-    // Cerrar modal al presionar Esc o al hacer clic fuera
+    // Cerrar modales al presionar Esc o al hacer clic fuera
     window.addEventListener('keydown', (e) => {
-      if (e.key === "Escape") closePreviewModal();
+      if (e.key === "Escape") {
+        closePreviewModal();
+        closeDonateModal();
+        closeFeedbackModal();
+      }
     });
     document.getElementById('player-modal').addEventListener('click', (e) => {
       if (e.target.id === 'player-modal') closePreviewModal();
+    });
+    document.getElementById('donate-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'donate-modal') closeDonateModal();
+    });
+    document.getElementById('feedback-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'feedback-modal') closeFeedbackModal();
     });
 
     // 4. BÚSQUEDA DE CANCIONES
@@ -466,6 +721,7 @@
 
         currentResults = data.results;
         renderResults(data.results);
+        sendTelemetryEvent("search", query);
       } catch (err) {
         skeleton.classList.add('hidden');
         emptyState.classList.remove('hidden');
@@ -635,6 +891,7 @@
         clearInterval(pollInterval);
 
         if (response.ok && data.success) {
+          sendTelemetryEvent("download_success", data.filename);
           container.innerHTML = `
             <div class="w-full py-2.5 px-3 rounded-xl bg-emerald-600/20 border border-emerald-500/50 flex items-center justify-between text-xs text-emerald-300 font-semibold shadow-sm animate-in fade-in">
               <span class="flex items-center gap-1.5 truncate">
