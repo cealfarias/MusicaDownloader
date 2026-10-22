@@ -12,9 +12,11 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session
 # 1. Configuración de Base de Datos (PostgreSQL en Render o SQLite local)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./telemetry.db")
 
-# Render proporciona URLs tipo postgres:// que SQLAlchemy requiere como postgresql://
+# Normalizar esquemas para SQLAlchemy 2.0 (usar psycopg2 / psycopg de forma explícita)
 if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
@@ -43,7 +45,10 @@ class DownloadLog(Base):
     file_format = Column(String(16), default="zip")
     created_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
 
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"[!] Advertencia al inicializar tablas: {e}")
 
 # 3. Inicialización de FastAPI
 app = FastAPI(
