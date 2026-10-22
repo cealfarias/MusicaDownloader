@@ -1,0 +1,21 @@
+# Entornos virtuales y Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+
+# Carpetas de compilación de PyInstaller
+# NOTA: Los archivos de dist/ se suben a GitHub Releases, NO al repositorio de código
+build/
+dist/
+*.spec
+
+# Base de datos local SQLite de telemetría
+*.db
+telemetry.db
+
+# Logs y temporizadores
+*.log
