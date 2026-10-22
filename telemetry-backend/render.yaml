@@ -12,3 +12,5 @@ services:
         value: https://github.com/cealfarias/MusicaDownloader/releases/latest/download/MusicaDownloader-v1.2-Windows.zip
       - key: EXE_DOWNLOAD_URL
         value: https://github.com/cealfarias/MusicaDownloader/releases/latest/download/MusicaDownloader.exe
+      - key: DATABASE_URL
+        value: postgresql://demiempresa_online_user:qPQ3Dt6qquqpOzRKESgTGf9NjefSeISK@dpg-d9uabv6417fc7383k650-a/demiempresa_online
