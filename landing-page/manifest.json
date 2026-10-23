@@ -1,0 +1,24 @@
+{
+  "name": "Musica Downloader - MP3 & Ringtones",
+  "short_name": "Musica Downloader",
+  "description": "Busca, previsualiza y descarga música en MP3 y tonos para celular sin anuncios ni virus.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

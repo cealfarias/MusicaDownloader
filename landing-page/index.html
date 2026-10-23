@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Musica Downloader - Descarga Música en MP3 Portable y Sin Anuncios</title>
   <meta name="description" content="Aplicación portable para Windows para buscar, reproducir y descargar música en MP3 en máxima calidad. Rápido, seguro y 100% libre de anuncios.">
+  
+  <!-- CONFIGURACIÓN PWA PARA CELULAR (ANDROID / IOS) -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Musica Downloader">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -371,6 +382,80 @@
       </a>
     </div>
   </section>
+
+  <!-- BANNER FLOTANTE DE INSTALACIÓN PWA PARA CELULARES -->
+  <div id="pwa-install-banner" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-50 hidden animate-in slide-in-from-bottom duration-300">
+    <div class="p-4 rounded-2xl bg-slate-900/95 border border-emerald-500/50 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <img src="/icon-192.png" alt="Icono" class="w-12 h-12 rounded-xl border border-slate-700 shadow-md">
+        <div>
+          <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+            <span>Musica Downloader</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 font-semibold">Móvil</span>
+          </h4>
+          <p class="text-[11px] text-slate-300">Instala la app en tu pantalla de inicio</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="pwa-install-btn" class="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-bold text-xs shadow-md transition-all whitespace-nowrap active:scale-95">
+          📲 Instalar
+        </button>
+        <button onclick="dismissPwaBanner()" class="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors">
+          &times;
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT DE REGISTRO SERVICE WORKER E INSTALACIÓN PWA -->
+  <script>
+    let deferredPrompt = null;
+    const pwaBanner = document.getElementById('pwa-install-banner');
+    const pwaBtn = document.getElementById('pwa-install-btn');
+
+    // 1. Registro del Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[PWA] Service Worker registrado con éxito:', reg.scope))
+          .catch(err => console.log('[PWA] Error al registrar Service Worker:', err));
+      });
+    }
+
+    // 2. Interceptar el evento de instalación en Android / Chrome
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Mostrar banner si el usuario no lo ha descartado previamente
+      if (!localStorage.getItem('pwa_dismissed')) {
+        pwaBanner.classList.remove('hidden');
+      }
+    });
+
+    if (pwaBtn) {
+      pwaBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('[PWA] Usuario aceptó instalar la app');
+        }
+        deferredPrompt = null;
+        pwaBanner.classList.add('hidden');
+      });
+    }
+
+    function dismissPwaBanner() {
+      pwaBanner.classList.add('hidden');
+      localStorage.setItem('pwa_dismissed', 'true');
+    }
+
+    // 3. Ocultar si ya se instaló
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA] Aplicación instalada exitosamente');
+      pwaBanner.classList.add('hidden');
+    });
+  </script>
 
   <!-- FOOTER -->
   <footer class="border-t border-slate-900 py-8 text-center text-xs text-slate-600">
