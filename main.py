@@ -31,6 +31,7 @@ import httpx
 from downloader import (
     search_youtube,
     download_audio_as_mp3,
+    create_ringtone,
     ensure_download_dir,
     get_current_download_dir,
     set_current_download_dir,
@@ -64,6 +65,17 @@ is_shutting_down = False
 class DownloadRequest(BaseModel):
     url: str
     id: Optional[str] = None
+    custom_dir: Optional[str] = None
+    task_id: Optional[str] = None
+
+class RingtoneRequest(BaseModel):
+    url: str
+    id: Optional[str] = None
+    start_time: float = 0.0
+    duration: float = 30.0
+    format_type: str = "mp3"
+    fade_in: float = 1.0
+    fade_out: float = 2.0
     custom_dir: Optional[str] = None
     task_id: Optional[str] = None
 
@@ -244,6 +256,49 @@ async def download_endpoint(payload: DownloadRequest):
             status_code=500,
             content={"success": False, "error": str(e)}
         )
+
+@app.post("/api/create-ringtone")
+async def ringtone_endpoint(payload: RingtoneRequest):
+    """
+    Recorta un fragmento de audio con FFmpeg, aplica fade in/out suave
+    y lo guarda como tono de llamada (.mp3 para Android o .m4r para iPhone).
+    """
+    if not payload.url:
+        raise HTTPException(status_code=400, detail="URL no proporcionada")
+
+    try:
+        result = await asyncio.to_thread(
+            create_ringtone,
+            payload.url,
+            payload.start_time,
+            payload.duration,
+            payload.format_type,
+            payload.fade_in,
+            payload.fade_out,
+            payload.custom_dir,
+            payload.task_id
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Error en creación de tono: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+@app.post("/api/open-ringtones-folder")
+async def open_ringtones_folder():
+    """Abre la carpeta Tonos_Celular en el Explorador de Windows."""
+    try:
+        dest_dir = get_current_download_dir() / "Tonos_Celular"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        if sys.platform == "win32":
+            os.startfile(str(dest_dir))
+        else:
+            subprocess.run(["xdg-open", str(dest_dir)])
+        return {"success": True, "path": str(dest_dir)}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.post("/api/open-folder")
 async def open_download_folder():

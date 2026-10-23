@@ -324,3 +324,134 @@ def download_audio_as_mp3(
                 "error": str(e),
                 "folder": str(dest_dir),
             }
+
+
+def create_ringtone(
+    video_url: str,
+    start_time: float = 0.0,
+    duration: float = 30.0,
+    format_type: str = "mp3",
+    fade_in: float = 1.0,
+    fade_out: float = 2.0,
+    custom_dir: Optional[str] = None,
+    task_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Recorta un segmento de audio (por defecto 30 segundos) de una canción de YouTube,
+    aplica fade-in / fade-out suave y lo exporta en la carpeta Tonos_Celular
+    en formato .MP3 (Android) o .M4R (iPhone).
+    """
+    import subprocess
+
+    if custom_dir:
+        base_dest = set_current_download_dir(custom_dir)
+    else:
+        base_dest = get_current_download_dir()
+
+    # Subcarpeta organizada para tonos de llamada
+    dest_dir = base_dest / "Tonos_Celular"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    
+    ffmpeg_exe = get_ffmpeg_path()
+    start_time = max(0.0, float(start_time))
+    duration = max(5.0, min(60.0, float(duration)))
+    fmt = "m4r" if format_type.lower() == "m4r" else "mp3"
+
+    if task_id:
+        download_progress[task_id] = {
+            "status": "downloading",
+            "percent": 25.0,
+            "speed": "Conectando audio",
+            "eta": "00:03",
+            "filename": None,
+            "error": None
+        }
+
+    try:
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=False)
+            title = info.get("title", "Tono")
+            audio_source = info.get("url")
+
+        if not audio_source:
+            raise ValueError("No se pudo obtener el flujo de audio para recortar")
+
+        clean_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()
+        if not clean_title:
+            clean_title = "Tono_Celular"
+        
+        start_min = int(start_time // 60)
+        start_sec = int(start_time % 60)
+        start_str = f"{start_min:02d}-{start_sec:02d}"
+        filename = f"{clean_title}_tono_{start_str}.{fmt}"
+        target_path = dest_dir / filename
+
+        if task_id:
+            download_progress[task_id].update({
+                "status": "converting",
+                "percent": 70.0,
+                "speed": "Recortando con FFmpeg",
+                "eta": "00:01"
+            })
+
+        fade_out_start = max(0.0, duration - fade_out)
+        audio_filter = f"afade=t=in:ss=0:d={fade_in},afade=t=out:st={fade_out_start}:d={fade_out}"
+
+        cmd = [
+            ffmpeg_exe, "-y",
+            "-ss", str(start_time),
+            "-t", str(duration),
+            "-i", audio_source,
+            "-af", audio_filter,
+        ]
+
+        if fmt == "m4r":
+            cmd += ["-c:a", "aac", "-b:a", "192k", "-f", "ipod", str(target_path)]
+        else:
+            cmd += ["-c:a", "libmp3lame", "-b:a", "320k", str(target_path)]
+
+        startupinfo = None
+        if os.name == 'nt':
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+
+        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, startupinfo=startupinfo)
+        if proc.returncode != 0:
+            err_msg = proc.stderr.decode("utf-8", errors="ignore")
+            raise RuntimeError(f"Error en FFmpeg al recortar: {err_msg[:200]}")
+
+        if task_id:
+            download_progress[task_id].update({
+                "status": "finished",
+                "percent": 100.0,
+                "filename": filename
+            })
+
+        return {
+            "success": True,
+            "title": title,
+            "filename": filename,
+            "path": str(target_path),
+            "folder": str(dest_dir),
+            "duration": duration,
+            "format": fmt
+        }
+    except Exception as e:
+        if task_id:
+            download_progress[task_id].update({
+                "status": "error",
+                "error": str(e)
+            })
+        return {
+            "success": False,
+            "error": str(e),
+            "folder": str(dest_dir)
+        }
+

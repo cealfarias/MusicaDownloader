@@ -279,15 +279,145 @@
       </div>
 
       <!-- Pie del modal -->
-      <div class="px-5 py-3.5 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between">
-        <span class="text-xs text-slate-500">Audio original en máxima fidelidad</span>
+      <div class="px-5 py-3.5 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between gap-2">
+        <button id="modal-ringtone-btn" class="px-4 py-2.5 rounded-xl bg-purple-600/30 hover:bg-purple-600 border border-purple-500/50 text-purple-200 hover:text-white font-semibold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+          <span>✂️ Crear Tono de Celular</span>
+        </button>
         <button id="modal-dl-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-2 transition-all shadow-md shadow-emerald-600/20 active:scale-95">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
           </svg>
-          <span>Descargar este MP3</span>
+          <span>Descargar MP3</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREADOR DE TONOS PARA CELULAR -->
+  <div id="ringtone-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-purple-500/30 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Cabecera -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-base">✂️</div>
+          <div>
+            <h3 class="font-bold text-white text-sm">Creador de Tonos para Celular</h3>
+            <p class="text-[11px] text-slate-400">Recorta los mejores 30s de tu canción favorita</p>
+          </div>
+        </div>
+        <button onclick="closeRingtoneModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors text-lg font-bold">
+          &times;
+        </button>
+      </div>
+
+      <!-- Contenido -->
+      <div class="p-5 space-y-4">
+        <!-- Canción seleccionada -->
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+          <img id="ringtone-thumb" src="" alt="Portada" class="w-14 h-14 rounded-lg object-cover">
+          <div class="truncate">
+            <h4 id="ringtone-title" class="font-bold text-white text-xs truncate">Título de la Canción</h4>
+            <p id="ringtone-channel" class="text-[11px] text-slate-400 truncate">Canal</p>
+            <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              Duración total: <span id="ringtone-total-duration">--:--</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Selector de Tiempo de Inicio -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold text-slate-300">Punto de inicio del tono:</span>
+            <span id="ringtone-range-label" class="font-mono text-emerald-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+              00:00 ➔ 00:30 (30s)
+            </span>
+          </div>
+
+          <!-- Slider interactivo -->
+          <input type="range" id="ringtone-slider" min="0" max="300" value="0" step="1"
+                 oninput="onRingtoneSliderChange(this.value)"
+                 class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500 focus:outline-none">
+
+          <!-- Botones de Salto Rápido -->
+          <div class="flex items-center justify-between gap-1 text-[11px]">
+            <button type="button" onclick="adjustRingtoneStart(-10)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">-10s</button>
+            <button type="button" onclick="adjustRingtoneStart(-5)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">-5s</button>
+            <button type="button" onclick="adjustRingtoneStart(0, true)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">Inicio (0s)</button>
+            <button type="button" onclick="adjustRingtoneStart(30, true)" class="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all">Estribillo (30s)</button>
+            <button type="button" onclick="adjustRingtoneStart(5)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">+5s</button>
+            <button type="button" onclick="adjustRingtoneStart(10)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">+10s</button>
+          </div>
+        </div>
+
+        <!-- Reproductor de Prueba del Fragmento -->
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button type="button" id="ringtone-preview-btn" onclick="toggleRingtonePreview()"
+                    class="w-9 h-9 rounded-full bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center transition-all shadow-md active:scale-95">
+              <svg id="ringtone-play-icon" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <svg id="ringtone-pause-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+            <div>
+              <p class="text-xs font-semibold text-white">Escuchar fragmento de 30s</p>
+              <p id="ringtone-preview-status" class="text-[10px] text-slate-400">Pruébalo antes de exportar</p>
+            </div>
+          </div>
+          <audio id="ringtone-audio-player" class="hidden"></audio>
+        </div>
+
+        <!-- Formato de Teléfono (Android / iPhone) -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Formato según tu teléfono:</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="cursor-pointer">
+              <input type="radio" name="ringtone-format" value="mp3" checked class="peer sr-only">
+              <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:text-emerald-400 text-center text-xs font-medium text-slate-300 transition-all">
+                <span class="block text-base mb-0.5">🤖</span>
+                <span class="font-bold">Android (.MP3)</span>
+                <span class="block text-[10px] text-slate-400">Llamadas y alarmas</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="ringtone-format" value="m4r" class="peer sr-only">
+              <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 peer-checked:border-purple-500 peer-checked:bg-purple-500/10 peer-checked:text-purple-400 text-center text-xs font-medium text-slate-300 transition-all">
+                <span class="block text-base mb-0.5">🍏</span>
+                <span class="font-bold">iPhone (.M4R)</span>
+                <span class="block text-[10px] text-slate-400">Formato oficial Apple</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Checkbox Efectos (Fade In / Out) -->
+        <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300 select-none">
+          <input type="checkbox" id="ringtone-fade-chk" checked class="rounded bg-slate-800 border-slate-700 text-purple-600 focus:ring-0">
+          <span>Suavizar volumen (Fade-In 1s al inicio y Fade-Out 2s al final)</span>
+        </label>
+
+        <!-- Barra de Progreso de Generación -->
+        <div id="ringtone-progress-box" class="hidden p-3 rounded-xl bg-slate-950 border border-purple-500/40 space-y-2">
+          <div class="flex items-center justify-between text-xs text-purple-300 font-semibold">
+            <span id="ringtone-progress-text">Procesando tono con FFmpeg...</span>
+            <span id="ringtone-progress-pct">0%</span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div id="ringtone-progress-bar" class="w-0 h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pie del Modal -->
+      <div class="px-5 py-3.5 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between">
+        <button type="button" onclick="closeRingtoneModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all">
+          Cancelar
+        </button>
+        <button type="button" id="ringtone-submit-btn" onclick="submitCreateRingtone()"
+                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-purple-600/30 active:scale-95">
+          <span>✂️ Guardar Tono para Celular</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -639,6 +769,14 @@
         closePreviewModal();
       };
 
+      const modalRingtoneBtn = document.getElementById('modal-ringtone-btn');
+      if (modalRingtoneBtn) {
+        modalRingtoneBtn.onclick = () => {
+          closePreviewModal();
+          openRingtoneModal(id, title, channel, url, thumb);
+        };
+      }
+
       modal.classList.remove('hidden');
 
       // Conectar el proxy de audio local libre de restricciones CORS
@@ -668,6 +806,7 @@
         closePreviewModal();
         closeDonateModal();
         closeFeedbackModal();
+        closeRingtoneModal();
       }
     });
     document.getElementById('player-modal').addEventListener('click', (e) => {
@@ -678,6 +817,9 @@
     });
     document.getElementById('feedback-modal').addEventListener('click', (e) => {
       if (e.target.id === 'feedback-modal') closeFeedbackModal();
+    });
+    document.getElementById('ringtone-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'ringtone-modal') closeRingtoneModal();
     });
 
     // 4. BÚSQUEDA DE CANCIONES
@@ -790,17 +932,24 @@
             </p>
           </div>
 
-          <!-- Botón de Descarga / Estado -->
-          <div id="dl-container-${safeId}" class="pt-2 border-t border-slate-800/80">
+          <!-- Botón de Descarga / Estado / Tono -->
+          <div id="dl-container-${safeId}" class="pt-2 border-t border-slate-800/80 flex items-center gap-2">
             <button 
               id="dl-btn-${safeId}"
               onclick="triggerDownload('${safeId}', '${safeUrl}')"
-              class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-emerald-600 border border-slate-700 hover:border-emerald-500 font-semibold text-xs text-slate-200 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 group/btn">
+              class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-emerald-600 border border-slate-700 hover:border-emerald-500 font-semibold text-xs text-slate-200 hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 group/btn">
               
-              <svg class="w-4 h-4 text-emerald-400 group-hover/btn:text-white transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-emerald-400 group-hover/btn:text-white transition-colors shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
               </svg>
-              <span>Descargar MP3</span>
+              <span class="truncate">Descargar MP3</span>
+            </button>
+
+            <button 
+              onclick="openRingtoneModal('${safeId}', '${safeTitle.replace(/'/g, "\\'")}', '${safeChannel.replace(/'/g, "\\'")}', '${safeUrl}', '${safeThumbnail}', '${item.duration}')"
+              title="Crear tono para celular (30 segundos)"
+              class="py-2.5 px-3 rounded-xl bg-purple-600/20 hover:bg-purple-600 border border-purple-500/40 hover:border-purple-500 font-semibold text-xs text-purple-300 hover:text-white transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 shrink-0">
+              <span>✂️ Tono</span>
             </button>
           </div>
         `;
@@ -971,6 +1120,218 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+    }
+
+    // ==========================================
+    // 8. CREADOR DE TONOS PARA CELULAR (RINGTONES)
+    // ==========================================
+    let currentRingtoneData = null;
+    let ringtoneAudioTimer = null;
+
+    function openRingtoneModal(id, title, channel, url, thumb, duration = "--:--") {
+      currentRingtoneData = { id, title, channel, url, thumb, duration };
+
+      document.getElementById('ringtone-thumb').src = thumb || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+      document.getElementById('ringtone-title').textContent = title;
+      document.getElementById('ringtone-channel').textContent = channel;
+      document.getElementById('ringtone-total-duration').textContent = duration;
+
+      let maxSeconds = 300;
+      if (duration && duration.includes(":")) {
+        const parts = duration.split(":").map(Number);
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          maxSeconds = Math.max(30, parts[0] * 60 + parts[1]);
+        }
+      }
+
+      const slider = document.getElementById('ringtone-slider');
+      slider.max = Math.max(30, maxSeconds - 30);
+      slider.value = 0;
+      onRingtoneSliderChange(0);
+
+      // Resetear reproductor de prueba
+      const audio = document.getElementById('ringtone-audio-player');
+      audio.pause();
+      audio.src = `/api/audio-proxy/${id}`;
+      updateRingtonePlayIcon(false);
+
+      // Ocultar barra de progreso anterior si estaba visible
+      document.getElementById('ringtone-progress-box').classList.add('hidden');
+      const submitBtn = document.getElementById('ringtone-submit-btn');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>✂️ Guardar Tono para Celular</span>';
+
+      document.getElementById('ringtone-modal').classList.remove('hidden');
+    }
+
+    function closeRingtoneModal() {
+      const audio = document.getElementById('ringtone-audio-player');
+      if (audio) {
+        audio.pause();
+        audio.removeAttribute('src');
+      }
+      clearTimeout(ringtoneAudioTimer);
+      updateRingtonePlayIcon(false);
+      const modal = document.getElementById('ringtone-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function onRingtoneSliderChange(val) {
+      const startSec = parseInt(val, 10);
+      const endSec = startSec + 30;
+
+      const formatTime = (s) => {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      };
+
+      document.getElementById('ringtone-range-label').textContent = 
+        `${formatTime(startSec)} ➔ ${formatTime(endSec)} (30s)`;
+
+      const audio = document.getElementById('ringtone-audio-player');
+      if (audio && !audio.paused) {
+        audio.currentTime = startSec;
+      }
+    }
+
+    function adjustRingtoneStart(delta, absolute = false) {
+      const slider = document.getElementById('ringtone-slider');
+      let current = parseInt(slider.value, 10);
+      let target = absolute ? delta : current + delta;
+      target = Math.max(0, Math.min(parseInt(slider.max, 10), target));
+      slider.value = target;
+      onRingtoneSliderChange(target);
+    }
+
+    function toggleRingtonePreview() {
+      const audio = document.getElementById('ringtone-audio-player');
+      const slider = document.getElementById('ringtone-slider');
+      const statusLbl = document.getElementById('ringtone-preview-status');
+      const startSec = parseInt(slider.value, 10);
+
+      clearTimeout(ringtoneAudioTimer);
+
+      if (audio.paused) {
+        audio.currentTime = startSec;
+        audio.play().then(() => {
+          updateRingtonePlayIcon(true);
+          statusLbl.textContent = "Reproduciendo muestra de 30s...";
+          ringtoneAudioTimer = setTimeout(() => {
+            audio.pause();
+            updateRingtonePlayIcon(false);
+            statusLbl.textContent = "Muestra de 30s finalizada";
+          }, 30000);
+        }).catch(err => {
+          statusLbl.textContent = "Haz clic de nuevo para reproducir";
+        });
+      } else {
+        audio.pause();
+        updateRingtonePlayIcon(false);
+        statusLbl.textContent = "Pausado";
+      }
+    }
+
+    function updateRingtonePlayIcon(isPlaying) {
+      const playIcon = document.getElementById('ringtone-play-icon');
+      const pauseIcon = document.getElementById('ringtone-pause-icon');
+      if (isPlaying) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+      }
+    }
+
+    async function submitCreateRingtone() {
+      if (!currentRingtoneData) return;
+
+      const slider = document.getElementById('ringtone-slider');
+      const startSec = parseInt(slider.value, 10);
+      const fmtRadio = document.querySelector('input[name="ringtone-format"]:checked');
+      const fmt = fmtRadio ? fmtRadio.value : 'mp3';
+      const fadeChk = document.getElementById('ringtone-fade-chk');
+      const hasFade = fadeChk ? fadeChk.checked : true;
+
+      const submitBtn = document.getElementById('ringtone-submit-btn');
+      const pBox = document.getElementById('ringtone-progress-box');
+      const pText = document.getElementById('ringtone-progress-text');
+      const pPct = document.getElementById('ringtone-progress-pct');
+      const pBar = document.getElementById('ringtone-progress-bar');
+
+      const audio = document.getElementById('ringtone-audio-player');
+      if (audio) audio.pause();
+      updateRingtonePlayIcon(false);
+
+      submitBtn.disabled = true;
+      pBox.classList.remove('hidden');
+      pText.textContent = "Conectando con FFmpeg...";
+      pPct.textContent = "20%";
+      pBar.style.width = "20%";
+
+      const taskId = `ringtone_${Date.now()}`;
+
+      const pollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/progress/${taskId}`);
+          const p = await res.json();
+          if (p.status === 'downloading') {
+            pText.textContent = "Extrayendo segmento de audio...";
+            pPct.textContent = `${Math.round(p.percent)}%`;
+            pBar.style.width = `${Math.round(p.percent)}%`;
+          } else if (p.status === 'converting') {
+            pText.textContent = "Recortando y aplicando Fade...";
+            pPct.textContent = "80%";
+            pBar.style.width = "80%";
+          }
+        } catch (e) {}
+      }, 300);
+
+      try {
+        const payload = {
+          url: currentRingtoneData.url,
+          id: currentRingtoneData.id,
+          start_time: startSec,
+          duration: 30.0,
+          format_type: fmt,
+          fade_in: hasFade ? 1.0 : 0.0,
+          fade_out: hasFade ? 2.0 : 0.0,
+          task_id: taskId
+        };
+
+        const response = await fetch('/api/create-ringtone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        clearInterval(pollTimer);
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          pText.textContent = "¡Tono creado al 100%!";
+          pPct.textContent = "100%";
+          pBar.style.width = "100%";
+
+          showToast(`¡Tono creado! Guardado: ${data.filename}`, "success");
+          sendTelemetryEvent("ringtone_created", `${fmt}_${data.filename}`);
+
+          setTimeout(() => {
+            closeRingtoneModal();
+          }, 1200);
+
+          fetch('/api/open-ringtones-folder', { method: 'POST' }).catch(() => {});
+        } else {
+          pText.textContent = "Error al generar tono";
+          showToast(data.error || "No se pudo crear el tono", "error");
+        }
+      } catch (err) {
+        clearInterval(pollTimer);
+        showToast("Error de conexión al generar tono: " + err.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+      }
     }
   </script>
 </body>
