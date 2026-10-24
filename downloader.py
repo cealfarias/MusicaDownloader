@@ -138,7 +138,8 @@ def search_youtube(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
         'skip_download': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'ios', 'mweb']
+                'player_client': ['android'],
+                'player_skip': ['webpage', 'configs', 'js']
             }
         }
     }
@@ -190,7 +191,8 @@ def get_audio_stream_url(video_id: str) -> Optional[str]:
         'skip_download': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'ios', 'mweb']
+                'player_client': ['android'],
+                'player_skip': ['webpage', 'configs', 'js']
             }
         }
     }
@@ -290,7 +292,8 @@ def download_audio_as_mp3(
         'noplaylist': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'ios', 'mweb']
+                'player_client': ['android'],
+                'player_skip': ['webpage', 'configs', 'js']
             }
         }
     }
@@ -390,7 +393,8 @@ def create_ringtone(
             'skip_download': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['android', 'ios', 'mweb']
+                    'player_client': ['android'],
+                    'player_skip': ['webpage', 'configs', 'js']
                 }
             }
         }

@@ -120,6 +120,7 @@ def get_real_ip(request: Request) -> str:
 def home():
     return {
         "service": "MusicaDownloader Telemetry API",
+        "version": "1.3.0-android-skip",
         "status": "online",
         "endpoints": {
             "download_and_track": "/download",
@@ -218,7 +219,8 @@ def backend_search_youtube(query: str, max_results: int = 15):
         'skip_download': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'ios', 'mweb']
+                'player_client': ['android'],
+                'player_skip': ['webpage', 'configs', 'js']
             }
         }
     }
@@ -243,7 +245,7 @@ def backend_search_youtube(query: str, max_results: int = 15):
         return results
 
 def backend_get_stream_url(video_id: str):
-    """Extrae la URL de flujo directo de googlevideo usando cliente Android/iOS."""
+    """Extrae la URL de flujo directo de googlevideo usando cliente Android y omitiendo la página web."""
     import yt_dlp
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -252,7 +254,8 @@ def backend_get_stream_url(video_id: str):
         'skip_download': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'ios', 'mweb']
+                'player_client': ['android'],
+                'player_skip': ['webpage', 'configs', 'js']
             }
         }
     }
