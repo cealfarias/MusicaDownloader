@@ -144,7 +144,7 @@ def home():
     cookie_active = bool(get_cookie_file_path())
     return {
         "service": "MusicaDownloader Telemetry API",
-        "version": "1.4.0-cookies-support",
+        "version": "1.5.0-player-response-fix",
         "cookies_configured": cookie_active,
         "status": "online",
         "endpoints": {
@@ -234,7 +234,7 @@ def get_backend_ffmpeg() -> str:
         return shutil.which("ffmpeg") or "ffmpeg"
 
 def backend_search_youtube(query: str, max_results: int = 15):
-    """Búsqueda en YouTube mediante yt-dlp usando cliente móvil para evitar bloqueos."""
+    """Búsqueda en YouTube mediante yt-dlp usando clientes compatibles y cookies."""
     import yt_dlp
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -244,8 +244,7 @@ def backend_search_youtube(query: str, max_results: int = 15):
         'skip_download': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['android'],
-                'player_skip': ['webpage', 'configs', 'js']
+                'player_client': ['web', 'mweb', 'android']
             }
         }
     }
@@ -274,7 +273,7 @@ def backend_search_youtube(query: str, max_results: int = 15):
         return results
 
 def backend_get_stream_url(video_id: str):
-    """Extrae la URL de flujo directo de googlevideo usando cliente Android y cookies si están configuradas."""
+    """Extrae la URL de flujo directo de googlevideo usando clientes compatibles y cookies si están configuradas."""
     import yt_dlp
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -283,8 +282,7 @@ def backend_get_stream_url(video_id: str):
         'skip_download': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['android'],
-                'player_skip': ['webpage', 'configs', 'js']
+                'player_client': ['web', 'mweb', 'android']
             }
         }
     }
