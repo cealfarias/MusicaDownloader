@@ -114,13 +114,38 @@ def get_real_ip(request: Request) -> str:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "127.0.0.1"
 
+def get_cookie_file_path() -> Optional[str]:
+    """
+    Gestiona el archivo de cookies de YouTube para autenticar ante YouTube en centros de datos.
+    1. Si existe la variable de entorno YOUTUBE_COOKIES, la escribe en un archivo temporal.
+    2. Si existe un archivo cookies.txt local, lo utiliza directamente.
+    """
+    raw_cookies = os.getenv("YOUTUBE_COOKIES", "").strip()
+    if raw_cookies:
+        import tempfile
+        cookie_path = os.path.join(tempfile.gettempdir(), "youtube_cookies.txt")
+        try:
+            with open(cookie_path, "w", encoding="utf-8") as f:
+                f.write(raw_cookies)
+            return cookie_path
+        except Exception as e:
+            print(f"[!] Error al escribir cookies desde variable de entorno: {e}")
+
+    for candidate in ["cookies.txt", "../cookies.txt", "/tmp/youtube_cookies.txt"]:
+        if os.path.exists(candidate) and os.path.getsize(candidate) > 10:
+            return candidate
+
+    return None
+
 # 4. Endpoints del Sistema
 
 @app.get("/")
 def home():
+    cookie_active = bool(get_cookie_file_path())
     return {
         "service": "MusicaDownloader Telemetry API",
-        "version": "1.3.0-android-skip",
+        "version": "1.4.0-cookies-support",
+        "cookies_configured": cookie_active,
         "status": "online",
         "endpoints": {
             "download_and_track": "/download",
@@ -224,6 +249,10 @@ def backend_search_youtube(query: str, max_results: int = 15):
             }
         }
     }
+    cookie_file = get_cookie_file_path()
+    if cookie_file:
+        ydl_opts['cookiefile'] = cookie_file
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
         entries = info.get('entries', [])
@@ -245,7 +274,7 @@ def backend_search_youtube(query: str, max_results: int = 15):
         return results
 
 def backend_get_stream_url(video_id: str):
-    """Extrae la URL de flujo directo de googlevideo usando cliente Android y omitiendo la página web."""
+    """Extrae la URL de flujo directo de googlevideo usando cliente Android y cookies si están configuradas."""
     import yt_dlp
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -259,6 +288,10 @@ def backend_get_stream_url(video_id: str):
             }
         }
     }
+    cookie_file = get_cookie_file_path()
+    if cookie_file:
+        ydl_opts['cookiefile'] = cookie_file
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
         return info.get("url"), info.get("title", "Audio")
