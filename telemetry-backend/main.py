@@ -171,9 +171,22 @@ def get_cookie_file_path() -> Optional[str]:
 def home():
     cookie_path = get_cookie_file_path()
     raw_cookies = os.getenv("YOUTUBE_COOKIES", "")
+    cookie_names = []
+    if cookie_path and os.path.exists(cookie_path):
+        try:
+            with open(cookie_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        parts = line.split("\t")
+                        if len(parts) >= 6:
+                            cookie_names.append(parts[5])
+        except Exception:
+            pass
+
     return {
         "service": "MusicaDownloader Telemetry API",
-        "version": "1.5.1-cookies-diagnostics",
+        "version": "1.5.2-smart-client-fallbacks",
         "cookies_configured": bool(cookie_path),
         "cookie_diag": {
             "length": len(raw_cookies),
@@ -181,7 +194,8 @@ def home():
             "has_literal_slash_n": "\\n" in raw_cookies,
             "has_tabs": "\t" in raw_cookies,
             "is_json": raw_cookies.strip().startswith("["),
-            "starts_with": raw_cookies[:40].replace("\n", "\\n").replace("\t", "\\t") if raw_cookies else ""
+            "starts_with": raw_cookies[:40].replace("\n", "\\n").replace("\t", "\\t") if raw_cookies else "",
+            "cookie_names": list(set(cookie_names))[:15]
         },
         "status": "online",
         "endpoints": {
@@ -310,26 +324,51 @@ def backend_search_youtube(query: str, max_results: int = 15):
         return results
 
 def backend_get_stream_url(video_id: str):
-    """Extrae la URL de flujo directo de googlevideo usando clientes compatibles y cookies si están configuradas."""
+    """Extrae la URL de flujo directo de googlevideo usando clientes compatibles y cookies con fallback inteligente."""
     import yt_dlp
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'quiet': True,
-        'no_warnings': True,
-        'skip_download': True,
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['web', 'mweb', 'android']
-            }
-        }
-    }
     cookie_file = get_cookie_file_path()
-    if cookie_file:
-        ydl_opts['cookiefile'] = cookie_file
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
-        return info.get("url"), info.get("title", "Audio")
+    # Estrategias en cascada para sortear restricciones en datacenters
+    strategies = [
+        None,                             # 1. Configuración por defecto de yt-dlp con cookies
+        ['web', 'mweb'],                  # 2. Clientes web estándar con cookies
+        ['tv_embedded', 'web_embedded'],  # 3. Clientes embebidos (menor fricción de bot checks)
+        ['android'],                      # 4. Cliente nativo móvil Android
+        ['web_creator', 'android_creator'] # 5. Clientes Studio/Creator
+    ]
+
+    last_error = None
+    for strategy in strategies:
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+        }
+        if cookie_file:
+            ydl_opts['cookiefile'] = cookie_file
+        if strategy:
+            ydl_opts['extractor_args'] = {'youtube': {'player_client': strategy}}
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+                # 1. Si info tiene URL directa
+                direct_url = info.get("url")
+                title = info.get("title", "Audio")
+                if direct_url:
+                    return direct_url, title
+
+                # 2. Si no, inspeccionar la lista de formatos disponibles
+                formats = info.get("formats", [])
+                for f in reversed(formats):
+                    if f.get("acodec") != "none" and f.get("url"):
+                        return f["url"], title
+        except Exception as e:
+            last_error = e
+            continue
+
+    raise last_error or Exception("No se pudo obtener el audio de YouTube")
 
 @app.get("/api/search")
 async def web_search(q: str):
