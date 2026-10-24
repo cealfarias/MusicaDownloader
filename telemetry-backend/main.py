@@ -370,6 +370,43 @@ def backend_get_stream_url(video_id: str):
 
     raise last_error or Exception("No se pudo obtener el audio de YouTube")
 
+@app.get("/api/diag-yt/{video_id}")
+def diag_yt(video_id: str):
+    """Diagnóstico detallado de extracción de YouTube para detectar causa exacta de bloqueo."""
+    import yt_dlp
+    cookie_path = get_cookie_file_path()
+    logs = []
+    class DiagLogger:
+        def debug(self, msg): logs.append(f"DEBUG: {msg}")
+        def info(self, msg): logs.append(f"INFO: {msg}")
+        def warning(self, msg): logs.append(f"WARN: {msg}")
+        def error(self, msg): logs.append(f"ERROR: {msg}")
+
+    ydl_opts = {
+        'logger': DiagLogger(),
+        'verbose': True,
+        'skip_download': True,
+    }
+    if cookie_path:
+        ydl_opts['cookiefile'] = cookie_path
+
+    res = {
+        "cookie_file": cookie_path,
+        "cookie_file_size": os.path.getsize(cookie_path) if cookie_path and os.path.exists(cookie_path) else 0,
+        "yt_dlp_version": yt_dlp.version.__version__
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+            res["title"] = info.get("title")
+            res["has_url"] = bool(info.get("url"))
+            res["formats"] = len(info.get("formats", []))
+    except Exception as e:
+        res["exception"] = str(e)
+
+    res["logs"] = logs[:50]
+    return res
+
 @app.get("/api/search")
 async def web_search(q: str):
     """Endpoint de búsqueda para la web y la PWA móvil."""
