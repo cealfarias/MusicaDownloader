@@ -117,11 +117,39 @@ def get_real_ip(request: Request) -> str:
 def get_cookie_file_path() -> Optional[str]:
     """
     Gestiona el archivo de cookies de YouTube para autenticar ante YouTube en centros de datos.
-    1. Si existe la variable de entorno YOUTUBE_COOKIES, la escribe en un archivo temporal.
-    2. Si existe un archivo cookies.txt local, lo utiliza directamente.
+    Soporta formato Netscape .txt, JSON de extensiones de navegador y repara automáticamente
+    saltos de línea escapados (\\n) o tabulaciones perdidas.
     """
     raw_cookies = os.getenv("YOUTUBE_COOKIES", "").strip()
     if raw_cookies:
+        # 1. Si contiene \\n literales escapados, convertirlos a saltos de línea reales
+        if "\\n" in raw_cookies and "\n" not in raw_cookies:
+            raw_cookies = raw_cookies.replace("\\n", "\n")
+
+        # 2. Si las cookies están en formato JSON (exportadas por extensiones comunes)
+        if raw_cookies.startswith("[") and raw_cookies.endswith("]"):
+            try:
+                import json
+                items = json.loads(raw_cookies)
+                lines = ["# Netscape HTTP Cookie File"]
+                for c in items:
+                    domain = c.get("domain", ".youtube.com")
+                    flag = "TRUE" if domain.startswith(".") else "FALSE"
+                    path = c.get("path", "/")
+                    secure = "TRUE" if c.get("secure", False) else "FALSE"
+                    expires = int(c.get("expirationDate", 0) or 0)
+                    name = c.get("name", "")
+                    value = c.get("value", "")
+                    if name:
+                        lines.append(f"{domain}\t{flag}\t{path}\t{secure}\t{expires}\t{name}\t{value}")
+                raw_cookies = "\n".join(lines)
+            except Exception as ex:
+                print(f"[!] Error parseando cookies JSON: {ex}")
+
+        # 3. Si no tiene el encabezado Netscape requerido por yt-dlp, agregarlo
+        if not raw_cookies.startswith("# Netscape") and not raw_cookies.startswith("# HTTP Cookie File"):
+            raw_cookies = "# Netscape HTTP Cookie File\n" + raw_cookies
+
         import tempfile
         cookie_path = os.path.join(tempfile.gettempdir(), "youtube_cookies.txt")
         try:
@@ -141,11 +169,20 @@ def get_cookie_file_path() -> Optional[str]:
 
 @app.get("/")
 def home():
-    cookie_active = bool(get_cookie_file_path())
+    cookie_path = get_cookie_file_path()
+    raw_cookies = os.getenv("YOUTUBE_COOKIES", "")
     return {
         "service": "MusicaDownloader Telemetry API",
-        "version": "1.5.0-player-response-fix",
-        "cookies_configured": cookie_active,
+        "version": "1.5.1-cookies-diagnostics",
+        "cookies_configured": bool(cookie_path),
+        "cookie_diag": {
+            "length": len(raw_cookies),
+            "lines": len(raw_cookies.splitlines()),
+            "has_literal_slash_n": "\\n" in raw_cookies,
+            "has_tabs": "\t" in raw_cookies,
+            "is_json": raw_cookies.strip().startswith("["),
+            "starts_with": raw_cookies[:40].replace("\n", "\\n").replace("\t", "\\t") if raw_cookies else ""
+        },
         "status": "online",
         "endpoints": {
             "download_and_track": "/download",
