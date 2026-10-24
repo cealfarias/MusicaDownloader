@@ -101,8 +101,40 @@
       </h1>
 
       <p class="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto mb-8 leading-relaxed">
-        Busca artistas, previsualiza el audio en vivo y descarga archivos MP3 en alta fidelidad directamente en tu computadora. Sin instaladores, sin suscripciones y sin publicidad.
+        Busca artistas, previsualiza el audio en vivo y descarga archivos MP3 o tonos para celular en alta fidelidad. 100% gratis, sin suscripciones y sin publicidad.
       </p>
+
+      <!-- BUSCADOR WEB Y CREADOR DE TONOS EN VIVO -->
+      <div class="max-w-xl mx-auto mb-10 text-left">
+        <form id="web-search-form" onsubmit="handleWebSearch(event)" class="relative flex items-center shadow-2xl shadow-emerald-500/10">
+          <div class="absolute left-4 text-emerald-400 pointer-events-none">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+          <input id="web-search-input" type="text" placeholder="Busca una canción o pega un enlace de YouTube..."
+                 class="w-full pl-12 pr-28 py-3.5 bg-slate-900 border border-emerald-500/40 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-sm shadow-inner" />
+          <button type="submit" id="web-search-btn" class="absolute right-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 font-bold text-slate-950 text-xs shadow-md transition-all active:scale-95">
+            <span id="web-btn-text">Buscar</span>
+          </button>
+        </form>
+
+        <!-- Indicador de búsqueda activa -->
+        <div id="web-search-spinner" class="hidden text-center py-6">
+          <div class="inline-flex items-center gap-2 text-xs text-emerald-400 font-medium">
+            <svg class="w-4 h-4 animate-spin text-emerald-400" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            Buscando música en los servidores...
+          </div>
+        </div>
+
+        <!-- Lista de Resultados Web -->
+        <div id="web-results-box" class="hidden mt-4 space-y-3 max-h-[380px] overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- SEPARADOR PC -->
+      <div class="flex items-center justify-center gap-3 mb-6 text-xs text-slate-500">
+        <span class="h-px w-16 bg-slate-800"></span>
+        <span>O descarga la aplicación completa para tu PC Windows:</span>
+        <span class="h-px w-16 bg-slate-800"></span>
+      </div>
 
       <!-- BOTONES DE ACCIÓN (ZIP RECOMENDADO Y EXE DIRECTO) -->
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
@@ -383,6 +415,163 @@
     </div>
   </section>
 
+  <!-- MODAL CREADOR DE TONOS WEB -->
+  <div id="web-ringtone-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-purple-500/40 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">✂️</span>
+          <h3 class="font-bold text-white text-sm">Creador de Tono para Celular</h3>
+        </div>
+        <button onclick="closeWebRingtoneModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center font-bold">&times;</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div>
+          <h4 id="w-ringtone-title" class="font-bold text-white text-xs truncate">Título</h4>
+          <p id="w-ringtone-channel" class="text-[11px] text-slate-400 truncate">Canal</p>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-slate-300 font-medium">Punto de inicio:</span>
+            <span id="w-range-lbl" class="font-mono text-purple-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-800">00:00 ➔ 00:30 (30s)</span>
+          </div>
+          <input type="range" id="w-ringtone-slider" min="0" max="300" value="0" step="1"
+                 oninput="onWebSliderChange(this.value)"
+                 class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500">
+          
+          <div class="flex justify-between gap-1 text-[11px] mt-2">
+            <button onclick="adjWebSlider(-10)" class="px-2 py-1 rounded bg-slate-800 text-slate-300">-10s</button>
+            <button onclick="adjWebSlider(0, true)" class="px-2 py-1 rounded bg-slate-800 text-slate-300">Inicio</button>
+            <button onclick="adjWebSlider(30, true)" class="px-2 py-1 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">Estribillo</button>
+            <button onclick="adjWebSlider(10)" class="px-2 py-1 rounded bg-slate-800 text-slate-300">+10s</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Formato para tu teléfono:</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="w-ringtone-fmt" value="mp3" checked class="peer sr-only">
+              <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:text-emerald-400 text-center text-xs font-medium">
+                🤖 Android (.MP3)
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="w-ringtone-fmt" value="m4r" class="peer sr-only">
+              <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 peer-checked:border-purple-500 peer-checked:bg-purple-500/10 peer-checked:text-purple-400 text-center text-xs font-medium">
+                🍏 iPhone (.M4R)
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-400">✨ Incluye Fade-in (1s) y Fade-out (2s) automático para sonido suave.</p>
+      </div>
+
+      <div class="px-5 py-3.5 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between">
+        <button onclick="closeWebRingtoneModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs">Cancelar</button>
+        <button id="w-ringtone-dl-btn" onclick="executeWebRingtoneDownload()"
+                class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 text-white font-bold text-xs shadow-md active:scale-95">
+          ✂️ Descargar Tono (30s)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TUTORIAL: CÓMO PONER EL TONO EN TU CELULAR -->
+  <div id="ringtone-tutorial-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📲</span>
+          <div>
+            <h3 class="font-bold text-white text-sm">Cómo poner tu nuevo tono en tu celular</h3>
+            <p class="text-[11px] text-emerald-400">¡Tu archivo se ha comenzado a descargar!</p>
+          </div>
+        </div>
+        <button onclick="closeTutorialModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center font-bold">&times;</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <!-- Pestañas Android / iPhone -->
+        <div class="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-950 border border-slate-800">
+          <button id="tab-btn-android" onclick="switchTutorialTab('android')" class="py-2 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs transition-all flex items-center justify-center gap-1.5">
+            <span>🤖</span>
+            <span>En Android (2 toques)</span>
+          </button>
+          <button id="tab-btn-iphone" onclick="switchTutorialTab('iphone')" class="py-2 rounded-lg text-slate-400 hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5">
+            <span>🍏</span>
+            <span>En iPhone (Apple)</span>
+          </button>
+        </div>
+
+        <!-- Contenido Android -->
+        <div id="tutorial-content-android" class="space-y-3">
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800/80">
+            <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0">1</span>
+            <div>
+              <h5 class="text-xs font-bold text-white">Ve a los Ajustes de tu teléfono</h5>
+              <p class="text-[11px] text-slate-400">Entra a <strong>Configuración ➔ Sonido y vibración ➔ Tono de llamada</strong>.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800/80">
+            <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0">2</span>
+            <div>
+              <h5 class="text-xs font-bold text-white">Añade tu nuevo tono</h5>
+              <p class="text-[11px] text-slate-400">Toca el icono <strong>"+" (Añadir tono)</strong> o <strong>"Mis archivos"</strong> y selecciona el archivo que acabas de descargar.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800/80">
+            <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0">3</span>
+            <div>
+              <h5 class="text-xs font-bold text-white">¡Listo! O úsalo en WhatsApp</h5>
+              <p class="text-[11px] text-slate-400">También puedes ponerlo en WhatsApp en <em>Ajustes ➔ Notificaciones ➔ Tono de notificación</em>.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contenido iPhone -->
+        <div id="tutorial-content-iphone" class="hidden space-y-3">
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800/80">
+            <span class="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold text-xs flex items-center justify-center shrink-0">1</span>
+            <div>
+              <h5 class="text-xs font-bold text-white">Tu tono se descargó en formato .M4R</h5>
+              <p class="text-[11px] text-slate-400">Apple requiere este formato especial para reconocer llamadas.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800/80">
+            <span class="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold text-xs flex items-center justify-center shrink-0">2</span>
+            <div>
+              <h5 class="text-xs font-bold text-white">Método rápido con GarageBand (Sin PC)</h5>
+              <p class="text-[11px] text-slate-400">Abre la app gratuita <strong>GarageBand</strong> en tu iPhone, mantén presionado el audio y toca <strong>Compartir ➔ Tono de llamada</strong>.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800/80">
+            <span class="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold text-xs flex items-center justify-center shrink-0">3</span>
+            <div>
+              <h5 class="text-xs font-bold text-white">O sincroniza con tu PC/Mac</h5>
+              <p class="text-[11px] text-slate-400">Arrastra el archivo <code>.m4r</code> a la pestaña "Tonos" en iTunes o Finder al conectar tu iPhone.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-5 py-3.5 bg-slate-950 border-t border-slate-800 text-center">
+        <button onclick="closeTutorialModal()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-md">
+          ¡Entendido! Disfrutar de mi tono
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- BANNER FLOTANTE DE INSTALACIÓN PWA PARA CELULARES -->
   <div id="pwa-install-banner" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-50 hidden animate-in slide-in-from-bottom duration-300">
     <div class="p-4 rounded-2xl bg-slate-900/95 border border-emerald-500/50 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-3">
@@ -455,6 +644,196 @@
       console.log('[PWA] Aplicación instalada exitosamente');
       pwaBanner.classList.add('hidden');
     });
+
+    // ==========================================
+    // 4. MOTOR DE BÚSQUEDA Y TONOS WEB
+    // ==========================================
+    let currentWebAudio = new Audio();
+    let currentlyPlayingId = null;
+    let selectedRingtoneItem = null;
+
+    async function handleWebSearch(event) {
+      if (event) event.preventDefault();
+      const input = document.getElementById('web-search-input');
+      const query = input.value.trim();
+      if (!query) return;
+
+      const spinner = document.getElementById('web-search-spinner');
+      const resultsBox = document.getElementById('web-results-box');
+      const btnText = document.getElementById('web-btn-text');
+
+      btnText.textContent = "Buscando...";
+      spinner.classList.remove('hidden');
+      resultsBox.classList.add('hidden');
+      resultsBox.innerHTML = '';
+
+      try {
+        const res = await fetch(`${TELEMETRY_API_URL}/api/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        spinner.classList.add('hidden');
+
+        if (res.ok && data.success && data.results && data.results.length > 0) {
+          renderWebResults(data.results);
+          resultsBox.classList.remove('hidden');
+        } else {
+          resultsBox.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No se encontraron resultados para "${query}".</p>`;
+          resultsBox.classList.remove('hidden');
+        }
+      } catch (err) {
+        spinner.classList.add('hidden');
+        resultsBox.innerHTML = `<p class="text-xs text-rose-400 text-center py-4">Error al conectar con los servidores. Intenta nuevamente.</p>`;
+        resultsBox.classList.remove('hidden');
+      } finally {
+        btnText.textContent = "Buscar";
+      }
+    }
+
+    function renderWebResults(results) {
+      const box = document.getElementById('web-results-box');
+      box.innerHTML = '';
+
+      results.forEach(item => {
+        const el = document.createElement('div');
+        el.className = "p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3 transition-all";
+        
+        const titleSafe = item.title.replace(/"/g, '&quot;');
+        const channelSafe = item.channel.replace(/"/g, '&quot;');
+
+        el.innerHTML = `
+          <div class="flex items-center gap-3 w-full sm:w-auto truncate">
+            <div class="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-950 shrink-0 cursor-pointer group" onclick="toggleWebPreview('${item.id}', this)">
+              <img src="${item.thumbnail}" alt="" class="w-full h-full object-cover">
+              <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <span id="play-btn-icon-${item.id}" class="text-white text-xs">▶</span>
+              </div>
+            </div>
+            <div class="truncate">
+              <h4 class="text-xs font-bold text-white truncate" title="${titleSafe}">${titleSafe}</h4>
+              <p class="text-[11px] text-slate-400 truncate">${channelSafe} • ${item.duration}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+            <button onclick="openWebRingtoneModal('${item.id}', '${item.title.replace(/'/g, "\\'")}', '${item.channel.replace(/'/g, "\\'")}')"
+                    class="px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600 border border-purple-500/40 text-purple-300 hover:text-white text-xs font-semibold flex items-center gap-1 transition-all">
+              <span>✂️ Tono</span>
+            </button>
+            <a href="${TELEMETRY_API_URL}/api/mp3-download?id=${item.id}" target="_blank"
+               class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1 transition-all">
+              <span>⬇️ MP3</span>
+            </a>
+          </div>
+        `;
+        box.appendChild(el);
+      });
+    }
+
+    function toggleWebPreview(id, btnEl) {
+      const icon = document.getElementById(`play-btn-icon-${id}`);
+      if (currentlyPlayingId === id && !currentWebAudio.paused) {
+        currentWebAudio.pause();
+        if (icon) icon.textContent = "▶";
+        currentlyPlayingId = null;
+        return;
+      }
+
+      if (currentlyPlayingId) {
+        const oldIcon = document.getElementById(`play-btn-icon-${currentlyPlayingId}`);
+        if (oldIcon) oldIcon.textContent = "▶";
+      }
+
+      currentWebAudio.pause();
+      currentWebAudio.src = `${TELEMETRY_API_URL}/api/audio-proxy/${id}`;
+      currentWebAudio.play().then(() => {
+        if (icon) icon.textContent = "⏸";
+        currentlyPlayingId = id;
+      }).catch(() => {
+        if (icon) icon.textContent = "▶";
+      });
+
+      currentWebAudio.onended = () => {
+        if (icon) icon.textContent = "▶";
+        currentlyPlayingId = null;
+      };
+    }
+
+    // MODAL DE TONO WEB
+    function openWebRingtoneModal(id, title, channel) {
+      selectedRingtoneItem = { id, title, channel };
+      document.getElementById('w-ringtone-title').textContent = title;
+      document.getElementById('w-ringtone-channel').textContent = channel;
+      document.getElementById('w-ringtone-slider').value = 0;
+      onWebSliderChange(0);
+      document.getElementById('web-ringtone-modal').classList.remove('hidden');
+    }
+
+    function closeWebRingtoneModal() {
+      document.getElementById('web-ringtone-modal').classList.add('hidden');
+    }
+
+    function onWebSliderChange(val) {
+      const s = parseInt(val, 10);
+      const e = s + 30;
+      const fmt = (sec) => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+      document.getElementById('w-range-lbl').textContent = `${fmt(s)} ➔ ${fmt(e)} (30s)`;
+    }
+
+    function adjWebSlider(delta, abs = false) {
+      const sl = document.getElementById('w-ringtone-slider');
+      let target = abs ? delta : parseInt(sl.value, 10) + delta;
+      target = Math.max(0, Math.min(parseInt(sl.max, 10), target));
+      sl.value = target;
+      onWebSliderChange(target);
+    }
+
+    function executeWebRingtoneDownload() {
+      if (!selectedRingtoneItem) return;
+      const slider = document.getElementById('w-ringtone-slider');
+      const startSec = slider.value;
+      const fmtRadio = document.querySelector('input[name="w-ringtone-fmt"]:checked');
+      const fmt = fmtRadio ? fmtRadio.value : 'mp3';
+
+      const downloadUrl = `${TELEMETRY_API_URL}/api/ringtone-download?id=${selectedRingtoneItem.id}&start=${startSec}&duration=30&format=${fmt}`;
+      
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      closeWebRingtoneModal();
+      openTutorialModal(fmt === 'm4r' ? 'iphone' : 'android');
+    }
+
+    // MODAL DE TUTORIAL DE TONO
+    function openTutorialModal(platform = 'android') {
+      switchTutorialTab(platform);
+      document.getElementById('ringtone-tutorial-modal').classList.remove('hidden');
+    }
+
+    function closeTutorialModal() {
+      document.getElementById('ringtone-tutorial-modal').classList.add('hidden');
+    }
+
+    function switchTutorialTab(platform) {
+      const btnAnd = document.getElementById('tab-btn-android');
+      const btnIph = document.getElementById('tab-btn-iphone');
+      const contAnd = document.getElementById('tutorial-content-android');
+      const contIph = document.getElementById('tutorial-content-iphone');
+
+      if (platform === 'android') {
+        btnAnd.className = "py-2 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs transition-all flex items-center justify-center gap-1.5";
+        btnIph.className = "py-2 rounded-lg text-slate-400 hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5";
+        contAnd.classList.remove('hidden');
+        contIph.classList.add('hidden');
+      } else {
+        btnIph.className = "py-2 rounded-lg bg-purple-500/20 text-purple-400 font-bold text-xs transition-all flex items-center justify-center gap-1.5";
+        btnAnd.className = "py-2 rounded-lg text-slate-400 hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5";
+        contIph.classList.remove('hidden');
+        contAnd.classList.add('hidden');
+      }
+    }
   </script>
 
   <!-- FOOTER -->

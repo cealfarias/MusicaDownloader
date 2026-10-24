@@ -4,7 +4,7 @@ import datetime
 from typing import Optional, Dict, Any
 
 from fastapi import FastAPI, Request, Depends
-from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse, StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, desc, func
@@ -193,6 +193,178 @@ def log_app_event(payload: EventPayload, db: Session = Depends(get_db)):
     db.add(entry)
     db.commit()
     return {"success": True}
+
+# ==========================================
+# MOTOR DE BÚSQUEDA Y MULTIMEDIA PARA LA WEB
+# ==========================================
+
+def get_backend_ffmpeg() -> str:
+    """Detecta la ruta del binario ffmpeg en el entorno de Render."""
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        import shutil
+        return shutil.which("ffmpeg") or "ffmpeg"
+
+def backend_search_youtube(query: str, max_results: int = 15):
+    """Búsqueda en YouTube mediante yt-dlp."""
+    import yt_dlp
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'quiet': True,
+        'no_warnings': True,
+        'extract_flat': True,
+        'skip_download': True,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
+        entries = info.get('entries', [])
+        results = []
+        for item in entries:
+            v_id = item.get("id")
+            if not v_id:
+                continue
+            dur = item.get("duration")
+            m, s = divmod(int(dur or 0), 60)
+            results.append({
+                "id": v_id,
+                "url": f"https://www.youtube.com/watch?v={v_id}",
+                "title": item.get("title") or "Sin título",
+                "channel": item.get("uploader") or item.get("channel") or "Desconocido",
+                "duration": f"{m:02d}:{s:02d}" if dur else "--:--",
+                "thumbnail": f"https://i.ytimg.com/vi/{v_id}/hqdefault.jpg"
+            })
+        return results
+
+def backend_get_stream_url(video_id: str):
+    """Extrae la URL de flujo directo de googlevideo."""
+    import yt_dlp
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'quiet': True,
+        'no_warnings': True,
+        'skip_download': True,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+        return info.get("url"), info.get("title", "Audio")
+
+@app.get("/api/search")
+async def web_search(q: str):
+    """Endpoint de búsqueda para la web y la PWA móvil."""
+    import asyncio
+    clean_q = q.strip()
+    if not clean_q:
+        return JSONResponse(status_code=400, content={"success": False, "error": "Búsqueda vacía"})
+    try:
+        results = await asyncio.to_thread(backend_search_youtube, clean_q)
+        return {"success": True, "results": results}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+@app.get("/api/audio-proxy/{video_id}")
+async def web_audio_proxy(video_id: str):
+    """Transmite el flujo de audio directamente al navegador sin bloqueos de CORS."""
+    import httpx
+    import asyncio
+    try:
+        stream_url, _ = await asyncio.to_thread(backend_get_stream_url, video_id)
+        if not stream_url:
+            return JSONResponse(status_code=404, content={"error": "Audio no disponible"})
+        client = httpx.AsyncClient(follow_redirects=True, timeout=30.0)
+        req = client.build_request("GET", stream_url)
+        resp = await client.send(req, stream=True)
+        return StreamingResponse(
+            resp.aiter_bytes(),
+            media_type=resp.headers.get("content-type", "audio/webm"),
+            background=client.aclose
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.get("/api/ringtone-download")
+async def web_ringtone_download(
+    id: str,
+    start: float = 0.0,
+    duration: float = 30.0,
+    format: str = "mp3"
+):
+    """Recorta 30 segundos de audio con FFmpeg, aplica Fade In/Out y entrega el archivo al celular."""
+    import asyncio, subprocess, tempfile
+    try:
+        stream_url, title = await asyncio.to_thread(backend_get_stream_url, id)
+        if not stream_url:
+            return JSONResponse(status_code=404, content={"error": "Audio no disponible"})
+        
+        clean_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip() or "Tono"
+        fmt = "m4r" if format.lower() == "m4r" else "mp3"
+        ffmpeg_exe = get_backend_ffmpeg()
+        
+        temp_dir = tempfile.mkdtemp()
+        out_path = os.path.join(temp_dir, f"{clean_title}_tono.{fmt}")
+        
+        fade_out_start = max(0.0, duration - 2.0)
+        audio_filter = f"afade=t=in:ss=0:d=1,afade=t=out:st={fade_out_start}:d=2"
+        
+        cmd = [
+            ffmpeg_exe, "-y",
+            "-ss", str(start),
+            "-t", str(duration),
+            "-i", stream_url,
+            "-af", audio_filter,
+        ]
+        if fmt == "m4r":
+            cmd += ["-c:a", "aac", "-b:a", "192k", "-f", "ipod", out_path]
+        else:
+            cmd += ["-c:a", "libmp3lame", "-b:a", "320k", out_path]
+            
+        def run_proc():
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            
+        await asyncio.to_thread(run_proc)
+        
+        return FileResponse(
+            path=out_path,
+            filename=f"{clean_title}_tono.{fmt}",
+            media_type="audio/mp4" if fmt == "m4r" else "audio/mpeg"
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.get("/api/mp3-download")
+async def web_mp3_download(id: str):
+    """Convierte y descarga la canción completa en MP3 320kbps directamente al celular."""
+    import asyncio, subprocess, tempfile
+    try:
+        stream_url, title = await asyncio.to_thread(backend_get_stream_url, id)
+        if not stream_url:
+            return JSONResponse(status_code=404, content={"error": "Audio no disponible"})
+            
+        clean_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip() or "Cancion"
+        ffmpeg_exe = get_backend_ffmpeg()
+        temp_dir = tempfile.mkdtemp()
+        out_path = os.path.join(temp_dir, f"{clean_title}.mp3")
+        
+        cmd = [
+            ffmpeg_exe, "-y",
+            "-i", stream_url,
+            "-c:a", "libmp3lame", "-b:a", "320k",
+            out_path
+        ]
+        
+        def run_proc():
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            
+        await asyncio.to_thread(run_proc)
+        
+        return FileResponse(
+            path=out_path,
+            filename=f"{clean_title}.mp3",
+            media_type="audio/mpeg"
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/api/stats")
 def get_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
