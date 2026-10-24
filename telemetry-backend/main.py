@@ -208,7 +208,7 @@ def get_backend_ffmpeg() -> str:
         return shutil.which("ffmpeg") or "ffmpeg"
 
 def backend_search_youtube(query: str, max_results: int = 15):
-    """Búsqueda en YouTube mediante yt-dlp."""
+    """Búsqueda en YouTube mediante yt-dlp usando cliente móvil para evitar bloqueos."""
     import yt_dlp
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -216,6 +216,11 @@ def backend_search_youtube(query: str, max_results: int = 15):
         'no_warnings': True,
         'extract_flat': True,
         'skip_download': True,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios', 'mweb']
+            }
+        }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
@@ -238,13 +243,18 @@ def backend_search_youtube(query: str, max_results: int = 15):
         return results
 
 def backend_get_stream_url(video_id: str):
-    """Extrae la URL de flujo directo de googlevideo."""
+    """Extrae la URL de flujo directo de googlevideo usando cliente Android/iOS."""
     import yt_dlp
     ydl_opts = {
         'format': 'bestaudio/best',
         'quiet': True,
         'no_warnings': True,
         'skip_download': True,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios', 'mweb']
+            }
+        }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)

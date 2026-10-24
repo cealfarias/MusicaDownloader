@@ -136,6 +136,11 @@ def search_youtube(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
         'no_warnings': True,
         'default_search': f'ytsearch{max_results}',
         'skip_download': True,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios', 'mweb']
+            }
+        }
     }
 
     results = []
@@ -183,6 +188,11 @@ def get_audio_stream_url(video_id: str) -> Optional[str]:
         'quiet': True,
         'no_warnings': True,
         'skip_download': True,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios', 'mweb']
+            }
+        }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
@@ -278,6 +288,11 @@ def download_audio_as_mp3(
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios', 'mweb']
+            }
+        }
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -373,6 +388,11 @@ def create_ringtone(
             'quiet': True,
             'no_warnings': True,
             'skip_download': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'ios', 'mweb']
+                }
+            }
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=False)
